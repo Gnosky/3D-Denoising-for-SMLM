@@ -122,9 +122,11 @@ with open(results_path,'w') as f:
             x_mean = approx_poisson_mean(log_loc,log_scale)
             x_posterior_mean = approx_poisson_posterior_mean(im*255,log_loc,log_scale)
             
-        mean_out = np.clip(np.squeeze(x_mean),0,255)
-        posterior_mean_out = np.clip(np.squeeze(x_posterior_mean),0,255)
+        #mean_out = np.clip(np.squeeze(x_mean),0,255)
+        #posterior_mean_out = np.clip(np.squeeze(x_posterior_mean),0,255)
         
+        mean_out = np.squeeze(x_mean)
+        posterior_mean_out = np.squeeze(x_posterior_mean)
         # Average over the images in each block
         psnr_noisy = 0
         psnr_mean = 0
@@ -144,9 +146,11 @@ with open(results_path,'w') as f:
             
         print(psnr_noisy/block.shape[0],psnr_mean/block.shape[0],psnr_posterior_mean/block.shape[0])
         f.write('%.15f,%.15f,%.15f\n'%(psnr_noisy/block.shape[0],psnr_mean/block.shape[0],psnr_posterior_mean/block.shape[0]))
-        imsave('chunk'+str(i)+'in.tiff',block.astype('uint8'), shape=block.shape)
-        imsave('chunk'+str(i)+'mean.tiff',mean_out.astype('uint8'),shape=mean_out.shape)
-        imsave('chunk'+str(i)+'posterior.tiff',posterior_mean_out.astype('uint8'),shape=posterior_mean_out.shape)
+        
+        new_block = block*255
+        imsave('chunk'+str(i)+'in.tiff',new_block.astype('int16'), shape=new_block.shape)
+        imsave('chunk'+str(i)+'mean.tiff',mean_out.astype('int16'),shape=mean_out.shape)
+        imsave('chunk'+str(i)+'posterior.tiff',posterior_mean_out.astype('int16'),shape=posterior_mean_out.shape)
 
                 
 """
