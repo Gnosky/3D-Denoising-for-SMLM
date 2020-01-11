@@ -134,7 +134,7 @@ def blindspot_network(inputs):
     b,d,h,w,c = K.int_shape(inputs)
     #if h != w:
     #raise ValueError('input shape must be square')
-    if h % 32 != 0 or w % 32 != 0 or d % 32 != 0:
+    if h % 32 != 0 or w % 32 != 0: #or d % 32 != 0:
         raise ValueError('input shape (%d x %d x %d) must be divisible by 32'%(h,w,d))
 
     # make vertical blindspot network
@@ -215,6 +215,58 @@ def mse_blindspot_network(input_shape,train_mean=0,train_std=1):
     model.add_loss(loss)
 
     return model
+def gaussian_loss(y,loc,log_var,log_noise_var,reg_weight=0.01):
+	std = log_var
+	var = log_var**2
+	noise_var = log_noise_var**2
+	#log_var = K.clip(log_var,-64,64)
+	#log_noise_var = K.clip(log_noise_var,-64,64)
+	#log_var = K.clip(log_var,-8,8)
+	#log_noise_var = K.clip(log_noise_var,-8,8)
+	#var = K.exp(log_var)
+	#noise_var = K.exp(log_noise_var)
+	#std = K.exp(0.5*log_var)
+	total_var = var+noise_var+1e-3
+	loss = (y-loc)**2 / total_var + tf.log(total_var)
+	reg = reg_weight*K.abs(std)
+	return K.mean(loss+reg)
+
+def gaussian_posterior_mean(y,loc,log_var,log_noise_var):
+ 	std = log_var
+ 	var = log_var**2
+ 	noise_var = log_noise_var**2
+ 	#log_var = K.clip(log_var,-64,64)
+ 	#log_noise_var = K.clip(log_noise_var,-64,64)
+ 	#log_var = K.clip(log_var,-8,8)
+ 	#log_noise_var = K.clip(log_noise_var,-8,8)
+ 	#var = K.exp(log_var)
+ 	#noise_var = K.exp(log_noise_var)
+ 	total_var = var+noise_var+1e-3
+ 	return (loc*noise_var + var*y)/total_var
+ 	#return loc
 
 
+def gaussian_blindspot_network(input_shape, train_mean=0,train_std=1, reg_weight=0.01):
+	
+	# Create input layer
+	inputs = Input(input_shape)
+
+	# Normalize
+	norm_input = Lambda(lambda x: (x-train_mean)/train_std)(inputs)
+
+	# run blindspot network
+	x = blindspot_network(norm_input)
+
+	loc = Conv3D(1,1,kernel_initializer='he_normal',name='loc')(x)
+	log_scale = Conv3D(1,1,kernel_initializer='he_normal',name='log_scale')(x)
+	log_noise_scale = Conv3D(1,1,kernel_initializer='he_normal',name='log_noise_scale')(x)
+
+	posterior_mean = Lambda(lambda x: gaussian_posterior_mean(*x)*train_std+train_mean)([norm_input, loc, log_scale, log_noise_scale])
+
+	model = Model(inputs=inputs, outputs=posterior_mean)
+	
+	loss = gaussian_loss(norm_input, loc, log_scale, log_noise_scale, reg_weight=reg_weight)
+	model.add_loss(loss)
+
+	return model
 
