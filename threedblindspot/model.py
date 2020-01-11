@@ -217,41 +217,4 @@ def mse_blindspot_network(input_shape,train_mean=0,train_std=1):
     return model
 
 
-# path = "12_first_100_frames_YFP.tif"
-
-# data = imageio.volread(path)
-# print("total data shape", data.shape)
-
-# # Start with square crops for simplicity
-# train_images = data[:70,128:256,128:256]
-# val_images = data[70:,128:256,128:256]
-# print("train data shape", train_images.shape)
-# print("validation data shape", val_images.shape)
-
-
-# # Following train.py from poisson denoising/FM
-
-
-# """The images are 8-bit (0-255 range) so we convert them to floating point, 0-1 range."""
-
-# norm = lambda im : (im / 255.0).reshape((128, 128, 1))
-# np_train_imgs = np.array([norm(im) for im in train_images])
-# np_val_imgs = np.array([norm(im) for im in val_images])
-
-# print("np_train_imgs shape", np_train_imgs.shape)
-# print("np_val_imgs shape", np_val_imgs.shape)
-
-
-# # Calculate sample statistics from the images. Might want to consider using mean for each image instead of mean overall
-
-
-# train_mean = np.mean(np_train_imgs)
-# train_std = np.std(np_train_imgs)
-# print(train_mean)
-# print(train_std)
-
-
-# # Instantiate a model
-
-# model = mse_blindspot_network((32,32,32,1), train_mean, train_std)
 
